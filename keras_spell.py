@@ -28,7 +28,7 @@ from numpy import zeros as np_zeros # pylint:disable=no-name-in-module
 from keras.models import Sequential, load_model
 from keras.layers import Activation, TimeDistributed, Dense, RepeatVector, Dropout, recurrent
 from keras.callbacks import Callback
-
+from keras.utils import multi_gpu_model
 # Set a logger for the module
 LOGGER = logging.getLogger(__name__) # Every log will use the module name
 LOGGER.addHandler(logging.StreamHandler())
