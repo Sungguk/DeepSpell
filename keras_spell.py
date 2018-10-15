@@ -68,7 +68,9 @@ CHARS = list("abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ .")
 PADDING = "☕"
 
 DATA_FILES_PATH = "./data"
+TRAINED_FILES_PATH = "./trained_model"
 DATA_FILES_FULL_PATH = os.path.expanduser(DATA_FILES_PATH)
+TRAINED_FILES_FULL_PATH = os.path.expanduser(TRAINED_FILES_PATH)
 DATA_FILES_URL = "http://www.statmt.org/wmt14/training-monolingual-news-crawl/news.2013.en.shuffled.gz"
 NEWS_FILE_NAME_COMPRESSED = os.path.join(DATA_FILES_FULL_PATH, "news.2013.en.shuffled.gz") # 1.1 GB
 NEWS_FILE_NAME_ENGLISH = "news.2013.en.shuffled"
@@ -79,7 +81,8 @@ NEWS_FILE_NAME_SPLIT = os.path.join(DATA_FILES_FULL_PATH, "news.2013.en.split")
 NEWS_FILE_NAME_TRAIN = os.path.join(DATA_FILES_FULL_PATH, "news.2013.en.train")
 NEWS_FILE_NAME_VALIDATE = os.path.join(DATA_FILES_FULL_PATH, "news.2013.en.validate")
 CHAR_FREQUENCY_FILE_NAME = os.path.join(DATA_FILES_FULL_PATH, "char_frequency.json")
-SAVED_MODEL_FILE_NAME = os.path.join(DATA_FILES_FULL_PATH, "keras_spell_e{}.h5") # an HDF5 file
+#SAVED_MODEL_FILE_NAME = os.path.join(DATA_FILES_FULL_PATH, "keras_spell_e{}.h5") # an HDF5 file
+SAVED_MODEL_FILE_NAME = os.path.join(TRAINED_FILES_FULL_PATH, "keras_spell_e{}.h5") # an HDF5 file
 
 # Some cleanup:
 NORMALIZE_WHITESPACE_REGEX = re.compile(r'[^\S\n]+', re.UNICODE) # match all whitespace except newlines
@@ -373,7 +376,7 @@ def preprocesses_data_clean():
     """Pre-process the data - step 1 - cleanup"""
     with open(NEWS_FILE_NAME_CLEAN, "wb") as clean_data:
         for line in open(NEWS_FILE_NAME):
-            decoded_line = line.decode('utf-8')
+            decoded_line = line
             cleaned_line = clean_text(decoded_line)
             encoded_line = cleaned_line.encode("utf-8")
             clean_data.write(encoded_line + b"\n")
@@ -383,13 +386,13 @@ def preprocesses_data_analyze_chars():
     counter = Counter()
     LOGGER.info("Reading data:")
     for line in open(NEWS_FILE_NAME_CLEAN):
-        decoded_line = line.decode('utf-8')
+        decoded_line = line
         counter.update(decoded_line)
 #     data = open(NEWS_FILE_NAME_CLEAN).read().decode('utf-8')
 #     LOGGER.info("Read.\nCounting characters:")
 #     counter = Counter(data.replace("\n", ""))
     LOGGER.info("Done.\nWriting to file:")
-    with open(CHAR_FREQUENCY_FILE_NAME, 'wb') as output_file:
+    with open(CHAR_FREQUENCY_FILE_NAME, 'w') as output_file:
         output_file.write(json.dumps(counter))
     most_popular_chars = {key for key, _value in counter.most_common(CONFIG.number_of_chars)}
     LOGGER.info("The top %s chars are:", CONFIG.number_of_chars)
@@ -406,9 +409,9 @@ def preprocesses_data_filter():
     """Pre-process the data - step 3 - filter only sentences with the right chars"""
     most_popular_chars = read_top_chars()
     LOGGER.info("Reading and filtering data:")
-    with open(NEWS_FILE_NAME_FILTERED, "wb") as output_file:
+    with open(NEWS_FILE_NAME_FILTERED, "w") as output_file:
         for line in open(NEWS_FILE_NAME_CLEAN):
-            decoded_line = line.decode('utf-8')
+            decoded_line = line
             if decoded_line and not bool(set(decoded_line) - most_popular_chars):
                 output_file.write(line)
     LOGGER.info("Done.")
@@ -431,9 +434,9 @@ def preprocesses_split_lines():
     """
     LOGGER.info("Reading filtered data:")
     answers = set()
-    with open(NEWS_FILE_NAME_SPLIT, "wb") as output_file:
+    with open(NEWS_FILE_NAME_SPLIT, "w") as output_file:
         for _line in open(NEWS_FILE_NAME_FILTERED):
-            line = _line.decode('utf-8')
+            line = _line
             while len(line) > MIN_INPUT_LEN:
                 if len(line) <= CONFIG.max_input_len:
                     answer = line
@@ -451,7 +454,7 @@ def preprocesses_split_lines():
                             line = line[space_location + 1:]
                             continue
                 answers.add(answer)
-                output_file.write(answer.encode('utf-8') + b"\n")
+                output_file.write(answer + "\n")
 
 def preprocesses_split_lines2():
     """Preprocess the text by splitting the lines between min-length and max_length
@@ -510,16 +513,16 @@ def preprocesses_split_lines4():
 
 def preprocess_partition_data():
     """Set asside data for validation"""
-    answers = open(NEWS_FILE_NAME_SPLIT).read().decode('utf-8').split("\n")
+    answers = open(NEWS_FILE_NAME_SPLIT).read().split("\n")
     print('shuffle', end=" ")
     random_shuffle(answers)
     print("Done")
     # Explicitly set apart 10% for validation data that we never train over
     split_at = len(answers) - len(answers) // 10
-    with open(NEWS_FILE_NAME_TRAIN, "wb") as output_file:
-        output_file.write("\n".join(answers[:split_at]).encode('utf-8'))
-    with open(NEWS_FILE_NAME_VALIDATE, "wb") as output_file:
-        output_file.write("\n".join(answers[split_at:]).encode('utf-8'))
+    with open(NEWS_FILE_NAME_TRAIN, "w") as output_file:
+        output_file.write("\n".join(answers[:split_at]))
+    with open(NEWS_FILE_NAME_VALIDATE, "w") as output_file:
+        output_file.write("\n".join(answers[split_at:]))
 
 
 def generate_question(answer):
@@ -572,14 +575,14 @@ def train_speller(from_file=None):
     itarative_train(model)
 
 if __name__ == '__main__':
-#    download_the_news_data()
-#    uncompress_data()
-#    preprocesses_data_clean()
-#    preprocesses_data_analyze_chars()
-#    preprocesses_data_filter()
-#    preprocesses_split_lines() #--- Choose this step or:
-#    preprocesses_split_lines2()
-#    preprocesses_split_lines4()
-#    preprocess_partition_data()
+    #download_the_news_data()
+    #uncompress_data()
+    #preprocesses_data_clean()
+    #preprocesses_data_analyze_chars()
+    #preprocesses_data_filter()
+    #preprocesses_split_lines() #--- Choose this step or:
+    #preprocesses_split_lines2()
+    #preprocesses_split_lines4()
+    preprocess_partition_data()
 #     train_speller(os.path.join(DATA_FILES_FULL_PATH, "keras_spell_e15.h5"))
     train_speller()
