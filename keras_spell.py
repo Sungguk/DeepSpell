@@ -59,7 +59,7 @@ CONFIG.validation_steps = 10
 CONFIG.number_of_iterations = 10
 #pylint:enable=attribute-defined-outside-init
 
-DIGEST = sha256(json.dumps(CONFIG.__dict__, sort_keys=True)).hexdigest()
+DIGEST = sha256(json.dumps(CONFIG.__dict__, sort_keys=True).encode('utf8')).hexdigest()
 
 # Parameters for the dataset
 MIN_INPUT_LEN = 5
@@ -67,7 +67,7 @@ AMOUNT_OF_NOISE = 0.2 / CONFIG.max_input_len
 CHARS = list("abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ .")
 PADDING = "☕"
 
-DATA_FILES_PATH = "~/Downloads/data"
+DATA_FILES_PATH = "./data"
 DATA_FILES_FULL_PATH = os.path.expanduser(DATA_FILES_PATH)
 DATA_FILES_URL = "http://www.statmt.org/wmt14/training-monolingual-news-crawl/news.2013.en.shuffled.gz"
 NEWS_FILE_NAME_COMPRESSED = os.path.join(DATA_FILES_FULL_PATH, "news.2013.en.shuffled.gz") # 1.1 GB
@@ -84,9 +84,9 @@ SAVED_MODEL_FILE_NAME = os.path.join(DATA_FILES_FULL_PATH, "keras_spell_e{}.h5")
 # Some cleanup:
 NORMALIZE_WHITESPACE_REGEX = re.compile(r'[^\S\n]+', re.UNICODE) # match all whitespace except newlines
 RE_DASH_FILTER = re.compile(r'[\-\˗\֊\‐\‑\‒\–\—\⁻\₋\−\﹣\－]', re.UNICODE)
-RE_APOSTROPHE_FILTER = re.compile(r'&#39;|[ʼ՚＇‘’‛❛❜ߴߵ`‵´ˊˋ{}{}{}{}{}{}{}{}{}]'.format(unichr(768), unichr(769), unichr(832),
-                                                                                      unichr(833), unichr(2387), unichr(5151),
-                                                                                      unichr(5152), unichr(65344), unichr(8242)),
+RE_APOSTROPHE_FILTER = re.compile(r'&#39;|[ʼ՚＇‘’‛❛❜ߴߵ`‵´ˊˋ{}{}{}{}{}{}{}{}{}]'.format(chr(768), chr(769), chr(832),
+                                                                                      chr(833), chr(2387), chr(5151),
+                                                                                      chr(5152), chr(65344), chr(8242)),
                                   re.UNICODE)
 RE_LEFT_PARENTH_FILTER = re.compile(r'[\(\[\{\⁽\₍\❨\❪\﹙\（]', re.UNICODE)
 RE_RIGHT_PARENTH_FILTER = re.compile(r'[\)\]\}\⁾\₎\❩\❫\﹚\）]', re.UNICODE)
@@ -151,7 +151,7 @@ def _vectorize(questions, answers, ctable):
     """Vectorize the data as numpy arrays"""
     len_of_questions = len(questions)
     X = np_zeros((len_of_questions, CONFIG.max_input_len, ctable.size), dtype=np.bool)
-    for i in xrange(len(questions)):
+    for i in range(len(questions)):
         sentence = questions.pop()
         for j, c in enumerate(sentence):
             try:
@@ -159,7 +159,7 @@ def _vectorize(questions, answers, ctable):
             except KeyError:
                 pass # Padding
     y = np_zeros((len_of_questions, CONFIG.max_input_len, ctable.size), dtype=np.bool)
-    for i in xrange(len(answers)):
+    for i in range(len(answers)):
         sentence = answers.pop()
         for j, c in enumerate(sentence):
             try:
@@ -288,7 +288,7 @@ def generator(file_name):
     while True:
         with open(file_name) as answers:
             for answer in answers:
-                batch_of_answers.append(answer.strip().decode('utf-8'))
+                batch_of_answers.append(answer.strip())
                 if len(batch_of_answers) == CONFIG.batch_size:
                     random_shuffle(batch_of_answers)
                     batch_of_questions = []
@@ -572,14 +572,14 @@ def train_speller(from_file=None):
     itarative_train(model)
 
 if __name__ == '__main__':
-#     download_the_news_data()
-#     uncompress_data()
-#     preprocesses_data_clean()
-#     preprocesses_data_analyze_chars()
-#     preprocesses_data_filter()
-#     preprocesses_split_lines() --- Choose this step or:
-#     preprocesses_split_lines2()
-#     preprocesses_split_lines4()
-#     preprocess_partition_data()
+#    download_the_news_data()
+#    uncompress_data()
+#    preprocesses_data_clean()
+#    preprocesses_data_analyze_chars()
+#    preprocesses_data_filter()
+#    preprocesses_split_lines() #--- Choose this step or:
+#    preprocesses_split_lines2()
+#    preprocesses_split_lines4()
+#    preprocess_partition_data()
 #     train_speller(os.path.join(DATA_FILES_FULL_PATH, "keras_spell_e15.h5"))
     train_speller()
